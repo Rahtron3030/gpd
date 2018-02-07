@@ -111,12 +111,16 @@ std::vector<cv::Mat> Learning::createImages(const CloudCamera& cloud_cam,
 
   if (image_params_.num_channels_ == 1 || image_params_.num_channels_ == 3) // 3 channels image (only surface normals)
   {
+    std::cout << "Num channels 1 or 3:"<< image_params_.num_channels_<<std::endl;
     return createImages1or3Channels(hand_set_list, nn_points_list, is_valid, image_dims);
   }
   else if (image_params_.num_channels_ == 15) // 15 channels image
   {
+    std::cout << "Num channels 15:"<< image_params_.num_channels_<<std::endl;
     return createImages15Channels(hand_set_list, nn_points_list, is_valid, image_dims);
   }
+
+  std::cout << "Got through creating images:"<<std::endl;
 
   std::vector<cv::Mat> empty;
   empty.resize(0);
@@ -188,6 +192,7 @@ cv::Mat Learning::createImage1or3Channels(const PointList& point_list, const Gra
 std::vector<cv::Mat> Learning::createImages15Channels(const std::vector<GraspSet>& hand_set_list,
   const std::vector<PointList>& nn_points_list, const bool* is_valid, const Eigen::Vector3d& image_dims) const
 {
+  std::cout<<"creating image in 15 channels"<<std::endl;
   // 1. Calculate shadow points for each point neighborhood.
   double t0_shadows = omp_get_wtime();
 
@@ -196,6 +201,8 @@ std::vector<cv::Mat> Learning::createImages15Channels(const std::vector<GraspSet
 
   std::vector<cv::Mat> images(hand_set_list.size() * num_orientations_, cv::Mat(60, 60, CV_8UC(15), cv::Scalar(0.0)));
   int num_images = 0;
+
+  std::cout<<"here"<<std::endl;
 
 #ifdef _OPENMP // parallelization using OpenMP
 #pragma omp parallel for num_threads(num_threads_)
@@ -213,6 +220,7 @@ std::vector<cv::Mat> Learning::createImages15Channels(const std::vector<GraspSet
         if (hand_set_list[i].getIsValid()(j))
         {
           const int idx = i * num_orientations_ + j;
+          // std::cout<<"here2"<<std::endl;
           images[idx] = createImage15Channels(nn_points_list[i], shadow, hands[j]);
           num_images++;
         }

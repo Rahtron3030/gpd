@@ -32,27 +32,34 @@
 
 // ROS
 #include <ros/ros.h>
+// std::cout << "About 1!\n";
 
 // Grasp Candidates Generator
 #include <gpg/cloud_camera.h>
+//std::cout << "About 2!\n";
 
 // Custom
 #include "../../include/gpd/grasp_detector.h"
 #include "../../include/gpd/sequential_importance_sampling.h"
+//std::cout << "About 3!\n";
 
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   // initialize ROS
   ros::init(argc, argv, "classify_grasp_candidates");
   ros::NodeHandle node("~");
-  
+
+  std::cout << "About to set camera position!\n";
+
   // Set the position from which the camera sees the point cloud.
   Eigen::Matrix3Xd view_points(3,1);
   view_points << 0.0, 0.0, 0.0;
   std::vector<double> camera_position;
   node.getParam("camera_position", camera_position);
   view_points << camera_position[0], camera_position[1], camera_position[2];
+
+  std::cout << "About to load point cloud from file\n";
 
   // Load point cloud from file.
   std::string filename;
@@ -63,6 +70,7 @@ int main(int argc, char* argv[])
     std::cout << "Input point cloud is empty or does not exist!\n";
     return (-1);
   }
+  std::cout << "About to detect grasp poses\n";
 
   // Detect grasp poses.
   bool use_importance_sampling;
@@ -73,9 +81,11 @@ int main(int argc, char* argv[])
     SequentialImportanceSampling detector(node);
 
     // Preprocess the point cloud (voxelize, workspace, etc.).
+    std::cout << "Using importance sampling\n";
     detector.preprocessPointCloud(cloud_cam);
 
     // Detect grasps in the point cloud.
+    std::cout << "I gto here! \n";
     std::vector<Grasp> grasps = detector.detectGrasps(cloud_cam);
   }
   else
@@ -83,9 +93,11 @@ int main(int argc, char* argv[])
     GraspDetector detector(node);
 
     // Preprocess the point cloud (voxelize, workspace, etc.).
+    std::cout << "NOT using importance sampling\n";
     detector.preprocessPointCloud(cloud_cam);
 
     // Detect grasps in the point cloud.
+    std::cout << "I got here! \n";
     std::vector<Grasp> grasps = detector.detectGrasps(cloud_cam);
   }
 

@@ -5,6 +5,7 @@ GraspDetector::GraspDetector(ros::NodeHandle& node)
 {
   Eigen::initParallel();
 
+  std::cout << "About to init Grasp Detector object!\n";
   // Create objects to store parameters.
   CandidatesGenerator::Parameters generator_params;
   HandSearch::Parameters hand_search_params;
@@ -159,6 +160,7 @@ std::vector<Grasp> GraspDetector::detectGrasps(const CloudCamera& cloud_cam)
   }
 
   // 3. Classify each grasp candidate. (Note: switch from a list of hypothesis sets to a list of grasp hypotheses)
+  ROS_INFO_STREAM("Setting up Grasp Classification.");
   std::vector<Grasp> valid_grasps = classifyGraspCandidates(cloud_cam, candidates);
   ROS_INFO_STREAM("Predicted " << valid_grasps.size() << " valid grasps.");
 
@@ -243,14 +245,17 @@ std::vector<Grasp> GraspDetector::classifyGraspCandidates(const CloudCamera& clo
 {
   // Create a grasp image for each grasp candidate.
   double t0 = omp_get_wtime();
-  std::cout << "Creating grasp images for classifier input ...\n";
+  std::cout << "Creating grasp images for classifier input! ...\n";
   std::vector<float> scores;
   std::vector<Grasp> grasp_list;
+  std::cout << "here ...\n";
   int num_orientations = candidates[0].getHypotheses().size();
 
   // Create images in batches if required (less memory usage).
   if (create_image_batches_)
   {
+    std::cout << "Starting creation of grasp images. \n";
+
     int batch_size = classifier_->getBatchSize();
     int num_iterations = (int) ceil(candidates.size() * num_orientations / (double) batch_size);
     int step_size = (int) floor(batch_size / (double) num_orientations);
@@ -282,9 +287,12 @@ std::vector<Grasp> GraspDetector::classifyGraspCandidates(const CloudCamera& clo
       scores.insert(scores.end(), scores_sublist.begin(), scores_sublist.end());
       grasp_list.insert(grasp_list.end(), valid_grasps.begin(), valid_grasps.end());
     }
+    std::cout << "Done with creation of grasp images. \n";
+
   }
   else
   {
+    std::cout << "creation of grasp images. \n";
     // Create the grasp images.
     std::vector<cv::Mat> image_list = learning_->createImages(cloud_cam, candidates);
     std::cout << " Image creation time: " << omp_get_wtime() - t0 << std::endl;
@@ -294,6 +302,7 @@ std::vector<Grasp> GraspDetector::classifyGraspCandidates(const CloudCamera& clo
     extractGraspsAndImages(candidates, image_list, valid_grasps, valid_images);
 
     // Classify the grasp images.
+    std::cout << "classify grasp images. \n";
     double t0_prediction = omp_get_wtime();
     scores = classifier_->classifyImages(valid_images);
     grasp_list.assign(valid_grasps.begin(), valid_grasps.end());
